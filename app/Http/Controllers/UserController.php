@@ -6,11 +6,20 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Kreait\Laravel\Firebase\Facades\Firebase;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     public function register(Request $request)
 {
+try {
+    DB::connection()->getPdo();
+    echo "Kết nối thành công!";
+} catch (\Exception $e) {
+    die("Lỗi kết nối: " . $e->getMessage());
+}
+
+
     $validator = Validator::make($request->all(), [
         'username' => 'required|string|max:255|unique:users',
         'password' => 'required|string|min:8',
@@ -35,17 +44,17 @@ class UserController extends Controller
     $user->save();
 
     // Send verification code via Firebase SMS
-    $phone = $request->input('phone');
-    $verificationCode = rand(100000, 999999);
+    // $phone = $request->input('phone');
+    // $verificationCode = rand(100000, 999999);
 
-    $message = "Your verification code is: " . $verificationCode;
+    // $message = "Your verification code is: " . $verificationCode;
 
-    $firebase = Firebase::initialize([
-        'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app/',
-        'phone_auth_verify' => true,
-    ]);
+    // $firebase = Firebase::initialize([
+    //     'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app/',
+    //     'phone_auth_verify' => true,
+    // ]);
 
-    $firebase->getAuth()->sendVerificationCode($phone, $message);
+    // $firebase->getAuth()->sendVerificationCode($phone, $message);
 
     return response()->json([
         'message' => 'User registered successfully',
