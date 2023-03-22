@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Controllers\Controller;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,22 +46,24 @@ class UserController extends Controller
     var_dump($user);
     $user->save();
     // Send verification code via Firebase SMS
-    // $phone = $request->input('phone');
-    // $verificationCode = rand(100000, 999999);
+    $phone = $request->input('phone');
+    $verificationCode = rand(100000, 999999);
 
-    // $message = "Your verification code is: " . $verificationCode;
-
-    // $firebase = Firebase::initialize([
-    //     'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app/',
-    //     'phone_auth_verify' => true,
-    // ]);
-
-    // $firebase->getAuth()->sendVerificationCode($phone, $message);
-
+    $message = "Your verification code is: " . $verificationCode;
+    if(checkFirebaseConnectionBeforePost()){
+    $firebase = Firebase::initialize([
+        'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app/',
+        'phone_auth_verify' => true,
+    ]); 
+    $firebase->getAuth()->sendVerificationCode($phone, $message);
+    } else {
+         return response()->json(['error' => 'Không thể kết nối với Firebase!'], 500);
+    }
+    // Return the user and the verification code
     return response()->json([
         'message' => 'User registered successfully',
         'user' => $user,
-        // 'verification_code' => $verificationCode,
+        'verification_code' => $verificationCode,
     ], 201);
 }
 public function getListUser()
@@ -100,21 +103,50 @@ public function getListUser()
             if (!Hash::check($request->input('password'), $user->password)) {
                 return response()->json(['error' => 'Invalid credentials']);
                 }
+                // var_dump(!Hash::check($request->input('password'), $user->password));
             // Tạo payload cho JWT token
             $payload = [
                 'sub' => $user->id,
-                'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
                 'iat' => time(),
-                'exp' => time() + (60 * 120) // Thời gian hết hạn của token: 1 giờ
+                'exp' => time() + (60 * 120) // Thời gian hết hạn của token: 2 giờ
             ];
-            
+            // $users = DB::table('users')->select('id', 'username', 'password', 'email' , 'phone')->get();
             // Tạo JWT token từ payload
-            $token = JWT::encode($payload, env('JWT_SECRET') , 'HS256');
+            $key = env('JWT_SECRET');
+            $alg = 'HS256';
+            $token = JWT::encode($payload, $key, $alg);
+            // $detoken = JWT::decode($token, $key, $alg); // Encode payload as a JWT Token
+            // var_dump($detoken);
             
-            return response()->json(['token' => $token]);
+            return response()->json(['messages' => '200' ,'token' => "$token" , 'user' => $user = DB::table('users')->select('id', 'username' , 'email' , 'phone')->where('username', $request->input('username'))->get()]);
         }
         
         return response()->json(['error' => 'Invalid credentials']);
     }
+    public function logout(Request $request)
+    {
+        $username = $request->input('username');
+        var_dump($username);
+
+        if (!$username) {
+            return response()->json([
+                'message' => 'Vui lòng cung cấp tên đăng nhập.'
+            ], 400);
+        }
+
+        $user = User::where('username', $username)->first();
+        // $password = User::where('password', $pass)->get();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Không tìm thấy người dùng có tên đăng nhập này.'
+            ], 404);
+        } 
+        Auth::logout();
+        return response()->json([
+            'message' => 'Đăng xuất thành công.',
+            'user' => $user
+        ]);
     }
+}

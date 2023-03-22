@@ -15,7 +15,8 @@
         "kreait/laravel-firebase": "*",
         "laravel/framework": "8.83.5",
         "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5"
+        "laravel/tinker": "^2.5",
+        "tymon/jwt-auth": "^1.0"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
