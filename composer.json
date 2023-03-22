@@ -7,14 +7,15 @@
     "require": {
         "php": "^7.3|^8.0",
         "firebase/php-jwt": "^6.4",
+        "fruitcake/php-cors": "1.2.0",
         "guzzlehttp/guzzle": "^7.0.1",
+        "illuminate/http": "8.83.5",
         "kreait/firebase-php": "5.15.0",
         "kreait/firebase-tokens": "1.15.0",
         "kreait/laravel-firebase": "*",
-        "laravel/framework": "8.0.0",
+        "laravel/framework": "8.83.5",
         "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5",
-        "illuminate/http": "8.0.0"
+        "laravel/tinker": "^2.5"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

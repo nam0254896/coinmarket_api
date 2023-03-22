@@ -12,13 +12,12 @@ class UserController extends Controller
 {
     public function register(Request $request)
 {
-try {
-    DB::connection()->getPdo();
-    echo "Kết nối thành công!";
-} catch (\Exception $e) {
-    die("Lỗi kết nối: " . $e->getMessage());
-}
-
+    try {
+        DB::connection()->getDatabaseName();
+        echo "Kết nối thành công!";
+    } catch (\Exception $e) {
+        die("Lỗi kết nối: " . $e->getMessage());
+    }
 
     $validator = Validator::make($request->all(), [
         'username' => 'required|string|max:255|unique:users',
@@ -59,7 +58,29 @@ try {
     return response()->json([
         'message' => 'User registered successfully',
         'user' => $user,
-        'verification_code' => $verificationCode,
+        // 'verification_code' => $verificationCode,
     ], 201);
 }
+public function getListUser()
+    {
+        $users = DB::table('users')->select('id', 'username', 'password', 'email' , 'phone')->get();
+        // $users = User::all();
+        foreach ($users as $user) {
+            $user->password = encrypt($user->password);
+        }
+
+        if($users->isNotEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'List users retrieved successfully.',
+                'data' => $users
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No users found in database.',
+                'data' => []
+            ]);
+        }
+    }
 }
