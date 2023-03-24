@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\coinController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -23,3 +24,5 @@ Route::post('/register', UserController::class . '@register');
 Route::get('/users', UserController::class . '@getListUser');
 Route::post('/login',  UserController::class . '@login');
 Route::post('/logout',  UserController::class . '@logout');
+Route::post('/users/change-role', UserController::class . '@changeRole');
+Route::get('/getCoinIntoDatabase', coinController::class . '@getCoinIntoDatabase');

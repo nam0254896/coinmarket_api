@@ -19,6 +19,7 @@ class CreateUsersTable extends Migration
         $table->string('password');
         $table->string('email');
         $table->string('phone');
+        // $table->string('role');
         $table->timestamps();
     });
 }
@@ -33,4 +34,7 @@ class CreateUsersTable extends Migration
     {
         Schema::dropIfExists('users');
     }
+
+    //php artisan migrate
+
 }

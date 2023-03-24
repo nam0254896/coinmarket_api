@@ -13,7 +13,7 @@ class User extends Model implements Authenticatable
     use Notifiable;
 
     protected $fillable = [
-        'username', 'password', 'email', 'phone',
+        'username', 'password', 'email', 'phone', 'role'
     ];
 
     protected $table = 'users';
