@@ -7,12 +7,12 @@ composer update
 php artisan migrate:refresh --seed
 php artisan make:controller UserController
 php artisan make:model User
-php artisan make:migrate create_users_table
+php artisan make:migration create_users_table
 php artisan make:seeder UsersTableSeeder
 php artisan make:factory UserFactory
 php artisan make:middleware CheckAge
 php artisan make:middleware CheckAge --model=User
-php artisan make:migrate update_users_table --table=users
+php artisan make:migration update_users_table --table=users
 php artisan config:cache
 php artisan config:clear
 php artisan route:cache

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateCoinsTableChangeInt extends Migration
+class CreateCoinsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,9 @@ class UpdateCoinsTableChangeInt extends Migration
      */
     public function up()
     {
-        Schema::table('coins', function (Blueprint $table) {
+        Schema::create('coins', function (Blueprint $table) {
+            $table->id();
+            $table->string('id_name')->nullable()->change();
             $table->string('name')->nullable()->change();
             $table->string('symbol')->nullable()->change();
             $table->string('image')->nullable()->change();
@@ -37,8 +39,8 @@ class UpdateCoinsTableChangeInt extends Migration
             $table->string('atl_change_percentage')->nullable()->change();
             $table->string('atl_date')->nullable()->change();
             $table->string('last_updated')->nullable()->change();
-            $table->string('id_name')->nullable()->change();
             $table->bigInteger('fully_diluted_valuation')->nullable()->change();
+            $table->timestamps();
         });
     }
 
@@ -49,6 +51,6 @@ class UpdateCoinsTableChangeInt extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('coins');
     }
 }
