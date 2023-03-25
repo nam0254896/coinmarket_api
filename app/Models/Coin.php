@@ -35,4 +35,6 @@ class Coin extends Model
                               'id_name',
                               'fully_diluted_valuation',
     ];
+
+    protected $table = 'coins';
 }
