@@ -26,3 +26,4 @@ Route::post('/login',  UserController::class . '@login');
 Route::post('/logout',  UserController::class . '@logout');
 Route::post('/users/change-role', UserController::class . '@changeRole');
 Route::get('/getCoinIntoDatabase', coinController::class . '@getCoinIntoDatabase');
+Route::get('/updateDatabeCoin', coinController::class . '@updateDatabeCoin');

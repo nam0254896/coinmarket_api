@@ -17,75 +17,75 @@ use GuzzleHttp\Client;
 class UserController extends Controller
 {
     public function register(Request $request)
-{
-    try {
-        DB::connection()->getDatabaseName();
-        echo "Kết nối thành công!";
-    } catch (\Exception $e) {
-        die("Lỗi kết nối: " . $e->getMessage());
-    }
+    {
+        try {
+            DB::connection()->getDatabaseName();
+            echo "Kết nối thành công!";
+        } catch (\Exception $e) {
+            die("Lỗi kết nối: " . $e->getMessage());
+        }
 
-    $validator = Validator::make($request->all(), [
-        'username' => 'required|string|max:255|unique:users',
-        'password' => 'required|string|min:8',
-        'email' => 'required|string|email|max:255|unique:users',
-        'phone' => 'required|string|max:10|unique:users',
-    ]);
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'required|string|max:10|unique:users',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'error' => $validator->errors()
-        ], 422);
-    }
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => $validator->errors()
+            ], 422);
+        }
 
-    // Create a new user
-    $user = new User([
-        'username' => $request->input('username'),
-        'password' => bcrypt($request->input('password')),
-        'email' => $request->input('email'),
-        'phone' => $request->input('phone'),
-    ]);
-    // var_dump($user);
-    
-    // Send verification code via Firebase SMS
-    $phone = $request->input('phone');
-    $verificationCode = rand(100000, 999999);
+        // Create a new user
+        $user = new User([
+            'username' => $request->input('username'),
+            'password' => bcrypt($request->input('password')),
+            'email' => $request->input('email'),
+            'phone' => $request->input('phone'),
+        ]);
+        // var_dump($user);
 
-    $message = "Your verification code is: " . $verificationCode;
-    // if($this->checkFirebaseConnectionBeforePost()){
-    //     $firebase = Firebase::initialize([
-    //     'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app',
-    //     'phone_auth_verify' => true,
-    //     ]); 
-    //     echo("Kết nối thành công!");
-    //     $user->save();
-    //     dd($firebase);
-    // $firebase->getAuth()->sendVerificationCode($phone, $message);
-    // } else {
-    //      return response()->json(['error' => 'Không thể kết nối với Firebase!'], 500);
-    // }
-    
-    $firebase = Firebase::initialize([
-        'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app',
-        'phone_auth_verify' => true,
-        ]); 
-        echo("Kết nối thành công!");
+        // Send verification code via Firebase SMS
+        $phone = $request->input('phone');
+        $verificationCode = rand(100000, 999999);
+
+        $message = "Your verification code is: " . $verificationCode;
+        // if($this->checkFirebaseConnectionBeforePost()){
+        //     $firebase = Firebase::initialize([
+        //     'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app',
+        //     'phone_auth_verify' => true,
+        //     ]); 
+        //     echo("Kết nối thành công!");
+        //     $user->save();
+        //     dd($firebase);
+        // $firebase->getAuth()->sendVerificationCode($phone, $message);
+        // } else {
+        //      return response()->json(['error' => 'Không thể kết nối với Firebase!'], 500);
+        // }
+
+        $firebase = Firebase::initialize([
+            'database_url' => 'https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app',
+            'phone_auth_verify' => true,
+        ]);
+        echo ("Kết nối thành công!");
         $user->save();
         dd($firebase);
-    $firebase->getAuth()->sendVerificationCode($phone, $message);
-    // Return the user and the verification code
-    return response()->json([
-        'message' => 'User registered successfully',
-        'user' => $user,
-        'verification_code' => $verificationCode,
-    ], 201);
-}
-public function getListUser()
+        $firebase->getAuth()->sendVerificationCode($phone, $message);
+        // Return the user and the verification code
+        return response()->json([
+            'message' => 'User registered successfully',
+            'user' => $user,
+            'verification_code' => $verificationCode,
+        ], 201);
+    }
+    public function getListUser()
     {
-        $users = DB::table('users')->select('id', 'username', 'email' , 'phone')->get();
+        $users = DB::table('users')->select('id', 'username', 'email', 'phone')->get();
         // $users = User::all();
         dd($users);
-        if($users->isNotEmpty()) {
+        if ($users->isNotEmpty()) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'List users retrieved successfully.',
@@ -99,9 +99,10 @@ public function getListUser()
             ]);
         }
     }
-    public function login(Request $request){
-       $credentials = $request->only('username', 'password');
-       
+    public function login(Request $request)
+    {
+        $credentials = $request->only('username', 'password');
+
         // Kiểm tra thông tin đăng nhập
         if (Auth::attempt($credentials)) {
             try {
@@ -113,8 +114,8 @@ public function getListUser()
             $user = Auth::user();
             if (!Hash::check($request->input('password'), $user->password)) {
                 return response()->json(['error' => 'Invalid credentials']);
-                }
-                // var_dump(!Hash::check($request->input('password'), $user->password));
+            }
+            // var_dump(!Hash::check($request->input('password'), $user->password));
             // Tạo payload cho JWT token
             $payload = [
                 'id' => $user->id,
@@ -130,11 +131,11 @@ public function getListUser()
             $token = JWT::encode($payload, $key, $alg);
             // $detoken = JWT::decode($token, $key, $alg); // Encode payload as a JWT Token
             // var_dump($detoken);
-            
-            return response()->json(['messages' => 'true' ,'token' => "$token" , 'user' => $user = DB::table('users')->select('id', 'username' , 'email' , 'phone')->where('username', $request->input('username'))->get()], 200 , ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
+
+            return response()->json(['messages' => 'true', 'token' => "$token", 'user' => $user = DB::table('users')->select('id', 'username', 'email', 'phone')->where('username', $request->input('username'))->get()], 200, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_UNESCAPED_UNICODE);
         }
-        
-        return response()->json(['error' => 'Invalid credentials'] ,500);
+
+        return response()->json(['error' => 'Invalid credentials'], 500);
     }
     public function logout(Request $request)
     {
@@ -153,17 +154,18 @@ public function getListUser()
             return response()->json([
                 'message' => 'Không tìm thấy người dùng có tên đăng nhập này.'
             ], 404);
-        } 
+        }
         Auth::logout();
         return response()->json([
             'message' => 'Đăng xuất thành công.',
             'user' => $user
         ]);
     }
-    public function checkFirebaseConnectionBeforePost() {
+    public function checkFirebaseConnectionBeforePost()
+    {
         // Set Firebase project ID
         $projectId = "coinmarket-13f98";
-        
+
         // Set Firebase service account email and private key
         $email = "nguyenhoangnam31082000@gmail.com";
         $passwordforcheck = 'Nam31082000';
@@ -175,11 +177,11 @@ public function getListUser()
             "password" => $passwordforcheck,
             "returnSecureToken" => true
         ];
-        try{
+        try {
             $response = Http::withHeaders([
                 "Content-Type" => "application/json"
             ])->post($url, $payload);
-            
+
             if ($response->successful()) {
                 $data = $response->json();
                 $user_id = $data['localId'];
@@ -191,7 +193,7 @@ public function getListUser()
                 // Xử lý lỗi
                 var_dump($error);
             }
-        }catch(\Exception $ex){
+        } catch (\Exception $ex) {
             return var_dump('Error: ' . $ex->getMessage());
         }
         try {
@@ -206,17 +208,17 @@ public function getListUser()
                 "uid" => "firebase-admin"
             );
             $jwt = JWT::encode($payload, $privateKey, "RS256", $projectId);
-            
+
             // Verify JWT token with Firebase
             $client = new \GuzzleHttp\Client();
-            
+
             $response = $client->post("https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken?key=$key", [
                 'json' => [
                     'token' => $jwt,
                     'returnSecureToken' => true
                 ]
             ]);
-            
+
             // Check if token is valid
             $responseData = json_decode($response->getBody(), true);
             return isset($responseData['idToken']);
@@ -225,34 +227,34 @@ public function getListUser()
         }
     }
     public function changeRole(Request $request)
-{
-    // Lấy dữ liệu gửi lên từ client
-    $username = $request->input('username');
+    {
+        // Lấy dữ liệu gửi lên từ client
+        $username = $request->input('username');
 
-    // Tìm user với username tương ứng trong database
-    $user = User::where('username', $username)->first();  
-    if (!$user) {
-        return response()->json(['message' => 'User not found'], 404);
-    }
-
-    // $role = $request->input('role');
-    $role = $user->role;
-    if (!$role) {
-        $role = 'admin';   
-    } else if ($role !== 'admin' && $role !== 'user') {
-        return response()->json(['error' => 'Invalid role'], 400);
-    }else{
-        if ($role === 'admin') {
-            $user->role = 'user';
-        } elseif ($role === 'user') {
-            $user->role = 'admin';
-        } else {
-            return response()->json(['error' => 'Invalid user role'], 400);
+        // Tìm user với username tương ứng trong database
+        $user = User::where('username', $username)->first();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
-    }
-    var_dump($user->role);
-    $user->save();
 
-    return response()->json(['message' => 'User role updated successfully'], 200);
-}
+        // $role = $request->input('role');
+        $role = $user->role;
+        if (!$role) {
+            $role = 'admin';
+        } else if ($role !== 'admin' && $role !== 'user') {
+            return response()->json(['error' => 'Invalid role'], 400);
+        } else {
+            if ($role === 'admin') {
+                $user->role = 'user';
+            } elseif ($role === 'user') {
+                $user->role = 'admin';
+            } else {
+                return response()->json(['error' => 'Invalid user role'], 400);
+            }
+        }
+        var_dump($user->role);
+        $user->save();
+
+        return response()->json(['message' => 'User role updated successfully'], 200);
+    }
 }
