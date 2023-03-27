@@ -14,6 +14,8 @@ use Illuminate\Mail\Transport\ArrayTransport;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Storage;
+use LengthException;
+
 use function PHPUnit\Framework\isEmpty;
 
 class coinController extends Controller
@@ -234,32 +236,34 @@ class coinController extends Controller
             'data' => DB::table('coins')->get(),
         ], 200);;
     }
-    public function updateChartCoinIntoDatabase(Request $request){
+    public function updateChartCoinIntoDatabase(Request $request)
+    {
         $client = new \GuzzleHttp\Client();
         $key = env('COINTOCOMPARE_API_KEY');
         $res = Storage::get('public/jsonCompare.txt');
         // dd($res);
         $data = json_decode($res, true)['Data'];
         // dd($data);
-        try{
-            foreach($data as $coin){
+        try {
+            foreach ($data as $coin) {
                 $database = DB::table('coinccompare')->get();
                 $existingCoinByDatabase = $database->where('symbol', $coin['symbol'])->first();
                 $existingCoin = Coinccompare::Where('symbol', $coin['symbol'])->first();
-                if($existingCoin !== $existingCoinByDatabase){
+                if ($existingCoin !== $existingCoinByDatabase) {
                     $existingCoin->partner_symbol = $coin['partner_symbol'];
                     $existingCoin->data_available_from = Carbon::createFromTimestamp($coin['data_available_from']);
                     $existingCoin->save();
-                }else{
+                } else {
                     Coinccompare::updateOrCreate([
                         'id' => $coin['id'],
-                    ],[
+                    ], [
                         'symbol' => $coin['symbol'],
                         'partner_symbol' => $coin['partner_symbol'],
                         'data_available_from' => Carbon::createFromTimestamp($coin['data_available_from']),
-                    ]);}
+                    ]);
+                }
             }
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Coin data not updated',
                 'error' => $e->getMessage(),
@@ -270,22 +274,70 @@ class coinController extends Controller
             'data' => DB::table('coinccompare')->get(),
         ], 200);;
     }
-    public function forHourto(Request $request){
-        $coins = DB::table('coinccompare')->select('id', 'symbol')->get();
-        // dd($coins);
-        foreach ($coins as $coin) {
-            $response = Http::get('https://min-api.cryptocompare.com/data/v2/histohour', [
-                'fsym' => $coin->symbol,
-                'tsym' => 'USD',
-                'limit' => 10,
-            ]);
-            // dd($response);
-            $data = $response->json()['Data']['Data'];
-            foreach ($data as $item) {
-                $coinValue = new CoinValue();
-                $coinValue->setCoinValue($coin->symbol, $item['open'], $item['high'], $item['low'], $item['close'], $item['volumeto'],$item['volumefrom'], Carbon::createFromTimestamp($item['time']));
-                // dd($coinValue);
+    public function forHourto(Request $request)
+    {
+
+        try {
+            $coins = DB::table('coinccompare')->select('id', 'symbol')->get();
+            foreach ($coins as $coin) {
+                $response = Http::get('https://min-api.cryptocompare.com/data/v2/histohour', [
+                    'fsym' => $coin->symbol,
+                    'tsym' => 'USD',
+                    'limit' => 10,
+                ]);
+                // dd($response);
+                $data = $response->json()['Data']['Data'];
+                // dd($data);
+                foreach ($data as $item) {
+                    // dd($coin->symbol);
+                    $coinValue = DB::table('coin_values')->get();
+                    // dd($coinValue->coin_id);
+                    // dd($coinValue !== [] && $coinValue->coin_id === $coin->symbol);
+                    dd($coinValue === []);
+                    if ($coinValue == []) {
+                        CoinValue::updateOrCreate([
+                            'id' => $item->id,
+                        ], [
+                            'coin_id' => $coin->symbol,
+                            'open' => $item['open'],
+                            'high' => $item['high'],
+                            'low' => $item['low'],
+                            'close' => $item['close'],
+                            'volumeto' => $item['volumeto'],
+                            'volumefrom' => $item['volumefrom'],
+                            'time' => Carbon::createFromTimestamp($item['time']),
+                        ]);
+                    }
+                    if ($coinValue != [] && $coinValue->coin_id === $coin->symbol) {
+                        $coinValue->setCoinValue($coin->symbol, $item['open'], $item['high'], $item['low'], $item['close'], $item['volumeto'], $item['volumefrom'], Carbon::createFromTimestamp($item['time']));
+                        dd($coinValue);
+                    } else {
+                        dd($coin->symbol);
+                        CoinValue::updateOrCreate([
+                            'id' => $item->id,
+                        ], [
+                            'coin_id' => $coin->symbol,
+                            'open' => $item['open'],
+                            'high' => $item['high'],
+                            'low' => $item['low'],
+                            'close' => $item['close'],
+                            'volumeto' => $item['volumeto'],
+                            'volumefrom' => $item['volumefrom'],
+                            'time' => Carbon::createFromTimestamp($item['time']),
+                        ]);
+                    }
+                    // dd($coinValue);
+                }
             }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Coin Value data not updated',
+                'error' => $e->getMessage(),
+            ], 500);
         }
+        return response()->json([
+            'message' => 'Coin Value data updated successfully',
+            'data' => DB::table('coin_values')->get(),
+        ], 200);;
     }
 }
