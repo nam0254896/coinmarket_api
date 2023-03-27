@@ -27,3 +27,5 @@ Route::post('/logout',  UserController::class . '@logout');
 Route::post('/users/change-role', UserController::class . '@changeRole');
 Route::get('/getCoinIntoDatabase', coinController::class . '@getCoinIntoDatabase');
 Route::get('/updateDatabeCoin', coinController::class . '@updateDatabeCoin');
+Route::get('/updateChartCoinIntoDatabase', coinController::class . '@updateChartCoinIntoDatabase');
+Route::get('/callvalue/forHourto' , coinController::class .'@forHourto');

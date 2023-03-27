@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\CoinForCMC;
+use App\Models\CoinCCompare;
 use App\Models\Coin;
+use App\Models\CoinValue;
+use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Mail\Transport\ArrayTransport;
 use Illuminate\Support\Facades\Http;
 
+use Illuminate\Support\Facades\Storage;
 use function PHPUnit\Framework\isEmpty;
 
 class coinController extends Controller
@@ -16,6 +21,7 @@ class coinController extends Controller
     public function getCoinIntoDatabase(Request $request)
     {
         ini_set('max_execution_time', 600);
+        ini_set('max_input_time', 600);
         $convert = $request->input('convert');
         if (empty($convert) || is_null($convert)) {
             $convert = 'USD';
@@ -157,7 +163,7 @@ class coinController extends Controller
                 $existingCoinByDatabase = $database->where('symbol', $coin['symbol'])->first();
                 $existingCoin = Coin::Where('symbol', $coin['symbol'])->first();
                 if ($existingCoin !== $existingCoinByDatabase) {
-                    $existingCoin->id = $coin['id_name'];
+                    $existingCoin->id_name = $coin['id'];
                     $existingCoin->name = $coin['name'];
                     $existingCoin->symbol = $coin['symbol'];
                     $existingCoin->image = $coin['image'];
@@ -227,5 +233,59 @@ class coinController extends Controller
             'message' => 'Coin data updated successfully',
             'data' => DB::table('coins')->get(),
         ], 200);;
+    }
+    public function updateChartCoinIntoDatabase(Request $request){
+        $client = new \GuzzleHttp\Client();
+        $key = env('COINTOCOMPARE_API_KEY');
+        $res = Storage::get('public/jsonCompare.txt');
+        // dd($res);
+        $data = json_decode($res, true)['Data'];
+        // dd($data);
+        try{
+            foreach($data as $coin){
+                $database = DB::table('coinccompare')->get();
+                $existingCoinByDatabase = $database->where('symbol', $coin['symbol'])->first();
+                $existingCoin = Coinccompare::Where('symbol', $coin['symbol'])->first();
+                if($existingCoin !== $existingCoinByDatabase){
+                    $existingCoin->partner_symbol = $coin['partner_symbol'];
+                    $existingCoin->data_available_from = Carbon::createFromTimestamp($coin['data_available_from']);
+                    $existingCoin->save();
+                }else{
+                    Coinccompare::updateOrCreate([
+                        'id' => $coin['id'],
+                    ],[
+                        'symbol' => $coin['symbol'],
+                        'partner_symbol' => $coin['partner_symbol'],
+                        'data_available_from' => Carbon::createFromTimestamp($coin['data_available_from']),
+                    ]);}
+            }
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Coin data not updated',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+        return response()->json([
+            'message' => 'Coin data updated successfully',
+            'data' => DB::table('coinccompare')->get(),
+        ], 200);;
+    }
+    public function forHourto(Request $request){
+        $coins = DB::table('coinccompare')->select('id', 'symbol')->get();
+        // dd($coins);
+        foreach ($coins as $coin) {
+            $response = Http::get('https://min-api.cryptocompare.com/data/v2/histohour', [
+                'fsym' => $coin->symbol,
+                'tsym' => 'USD',
+                'limit' => 10,
+            ]);
+            // dd($response);
+            $data = $response->json()['Data']['Data'];
+            foreach ($data as $item) {
+                $coinValue = new CoinValue();
+                $coinValue->setCoinValue($coin->symbol, $item['open'], $item['high'], $item['low'], $item['close'], $item['volumeto'],$item['volumefrom'], Carbon::createFromTimestamp($item['time']));
+                // dd($coinValue);
+            }
+        }
     }
 }
