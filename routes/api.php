@@ -29,3 +29,4 @@ Route::get('/getCoinIntoDatabase', coinController::class . '@getCoinIntoDatabase
 Route::get('/updateDatabeCoin', coinController::class . '@updateDatabeCoin');
 Route::get('/updateChartCoinIntoDatabase', coinController::class . '@updateChartCoinIntoDatabase');
 Route::get('/callvalue/forHourto' , coinController::class .'@forHourto');
+// Route::get('/callvalue/importDataWithApi' , coinController::class .'@importDataWithApi');
